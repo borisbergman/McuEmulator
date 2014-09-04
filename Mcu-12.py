@@ -101,14 +101,13 @@ class McuInterpret(threading.Thread):
                 print("channel or preset out of bounds")
         elif self.ReceivedData[3] == bytes.fromhex('19'):
             #4.6 Button or File Programming
-            print("button or file programming".rjust(21))
-            if len(self.ReceivedData) == 35 :
-                self.generateCommand([0x12,0x0E,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-                                      0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF])
-                print("alarm {0}".format(self.ReceivedData[4:12]))
-                print("alert {0}".format(self.ReceivedData[12:20]))
-                print("fds {0}".format(self.ReceivedData[20:28]))
-                print("preann {0}".format(self.ReceivedData[28:32]))
+            print("button or file programming")
+            if len(self.ReceivedData) == 35:
+                self.generateCommand([0x12,0x0E])
+
+                print("FirePanel\t\t{0}".format(str(ByteToHex(self.ReceivedData[6:14]))))
+                print("Evacuation Panel\t\t{0}".format(str(ByteToHex(self.ReceivedData[14:22]))))
+                print("Fire Detection\t\t{0}".format(str(ByteToHex(self.ReceivedData[22:30]))))
             else:
                 print("not right length {0}".format(len(self.ReceivedData)) )
         elif self.ReceivedData[3] == bytes.fromhex('14') and self.bytesToReceive > 5:
@@ -223,7 +222,7 @@ class McuInterpret(threading.Thread):
             elif self.ReceivedData[4] == bytes.fromhex('06'):
                 print("getE2PROM")
 
-                amount = struct.unpack('B', self.ReceivedData[7])[0]
+                amount = struct.unpack('B', self.ReceivedData[9])[0]
                 offset = struct.unpack('I',  b''.join(reversed(self.ReceivedData[5:9])))[0]
 
                 print("offset = " + str(offset) + " amount = " + str(amount))
@@ -308,11 +307,11 @@ class McuInterpret(threading.Thread):
         for q in [[62,62,62, x // 10 % 10 + 48, x % 10 + 48,60,60,60,60,60,60,60,60,60,60,124] for x in range(39)]:
             names.extend(q)
 
-        self.EEPROM[offset: offset + amount] = names
+        self.Eeprom[offset: offset + amount] = names
 
         sdmessagesoffset = 41984;
-        self.EEPROM[sdmessagesoffset: sdmessagesoffset + 20] = [x+1 for x in range(20)]
-        self.EEPROM[sdmessagesoffset + 20: sdmessagesoffset + 30] = [0x01 for x in range(10)]
+        self.Eeprom[sdmessagesoffset: sdmessagesoffset + 20] = [x+1 for x in range(20)]
+        self.Eeprom[sdmessagesoffset + 20: sdmessagesoffset + 30] = [0x01 for x in range(10)]
 
         print("EEPROM data generated")
 
