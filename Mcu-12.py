@@ -186,10 +186,6 @@ class McuInterpret(threading.Thread):
                 command.append(q)
             self.generateCommand(command)
 
-        elif self.ReceivedData[3] == bytes.fromhex('1e') and len(self.bytesToReceive) > 4:
-            #4.11 GUI keep alive
-            self.generateCommand([0x12, 0x01])
-
         elif self.ReceivedData[3] == bytes.fromhex('10') and self.bytesToReceive > 5:
             #4.12 Global Unit commands
             print("global unit command".rjust(21))
@@ -235,11 +231,12 @@ class McuInterpret(threading.Thread):
                 command = [18, 14]
                 command.extend(self.Eeprom[offset: offset + amount])
                 self.generateCommand(command)
-            elif self.ReceivedData[4] == bytes.fromhex('08'):
+
+            elif self.ReceivedData[4] == bytes.fromhex('0E') or self.ReceivedData[4] == bytes.fromhex('08'):
                 #4.12.8 set eeprom
                 offset = struct.unpack('I', b''.join(reversed(self.ReceivedData[5:9])))[0]
-                amount = struct.unpack('B', self.ReceivedData[7])[0]
-                print("E2prom Write, amount: " + str(amount) + "offset: " + str(offset))
+                amount = struct.unpack('B', self.ReceivedData[2])[0] - 10
+                print("E2prom Update, amount: " + str(amount) + "offset: " + str(offset))
                 #put data in E2prom
                 self.Eeprom[offset:offset + amount] = [struct.unpack('B', x)[0] for x in
                                                        self.ReceivedData[8:amount + 8]]
@@ -279,6 +276,10 @@ class McuInterpret(threading.Thread):
 
     #generates command based on protocol byte 4(3) till end
     def generateCommand(self, p):
+        #deliberately make things difficult. Sometimes I don't respond :p
+        #if random.randrange(50) == 9:
+        #    return
+
         #source
         p.insert(0, self.ThreadID)
         #destination
@@ -287,11 +288,6 @@ class McuInterpret(threading.Thread):
         p.insert(2, len(p) + 2)
         #checksum
         p.append(self.getChecksum(p))
-
-        # if 1:
-        #     self.ser.write(p[0:3])
-        #     time.sleep(0.1)
-        #     self.ser.write(p[3:len(p)])
 
         print("writing:{0}".format(str(IntToHex(p))))
         self.ser.write(p)
@@ -391,7 +387,7 @@ class McuInterpret(threading.Thread):
 
 #p = McuInterpret(1)
 mcuId = 1
-for cPort in [1, 9, 11, 13, 15, 17, 19, 21]:
+for cPort in [9, 11, 13]:
     McuInterpret(mcuId, "thread" + str(cPort), cPort).start()
     mcuId += 1
 
