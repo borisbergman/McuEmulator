@@ -223,14 +223,12 @@ class McuInterpret(threading.Thread):
                                       0x33, 0x33, 0x33])  #3 extension
             elif self.ReceivedData[4] == bytes.fromhex('06'):
                 print("getE2PROM")
-
-                amount = struct.unpack('B', self.ReceivedData[9])[0]
                 offset = struct.unpack('I', b''.join(reversed(self.ReceivedData[5:9])))[0]
+                amount = struct.unpack('B', self.ReceivedData[9])[0]
 
                 print("offset = " + str(offset) + " amount = " + str(amount))
-                command = [18, 14]
-                command.extend(self.Eeprom[offset: offset + amount])
-                self.generateCommand(command)
+                command = [0x12, 0x0E]
+                self.generateCommand(command + self.Eeprom[offset: offset + amount])
 
             elif self.ReceivedData[4] == bytes.fromhex('0E') or self.ReceivedData[4] == bytes.fromhex('08'):
                 #4.12.8 set eeprom
@@ -239,7 +237,7 @@ class McuInterpret(threading.Thread):
                 print("E2prom Update, amount: " + str(amount) + "offset: " + str(offset))
                 #put data in E2prom
                 self.Eeprom[offset:offset + amount] = [struct.unpack('B', x)[0] for x in
-                                                       self.ReceivedData[8:amount + 8]]
+                                                       self.ReceivedData[9:amount + 9]]
                 self.generateCommand([0x12, 0x01])
             elif self.ReceivedData[4] == bytes.fromhex('0A'):
                 print("Set sensitivity")
