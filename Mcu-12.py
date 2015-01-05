@@ -238,6 +238,7 @@ class McuInterpret(threading.Thread):
                 #put data in E2prom
                 self.Eeprom[offset:offset + amount] = [struct.unpack('B', x)[0] for x in
                                                        self.ReceivedData[9:amount + 9]]
+
                 self.generateCommand([0x12, 0x01])
             elif self.ReceivedData[4] == bytes.fromhex('0A'):
                 print("Set sensitivity")
