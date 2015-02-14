@@ -447,23 +447,22 @@ class McuInterpretNet(McuInterpret):
             return None
         return data
 
-# mcuId = 2
-# for cPort in [9, 11, 13]:
-#    McuInterpretCom(mcuId, "thread" + str(cPort), cPort).start()
-#    mcuId += 1
+mcuId = 0
+for cPort in [9, 11, 13]:
+   McuInterpretCom(mcuId, "thread" + str(cPort), cPort).start()
+   mcuId += 1
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     s.bind(('', 1002))
     print('socket bind complete')
-except socket.error as msg:
-    print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
-    sys.exit()
-
-s.listen(10)
-print('socket now listening')
-
-while 1:
-    conn, addr = s.accept()
-    print('Connected with ' + addr[0] + ':' + str(addr[1]))
-    McuInterpretNet(1, "mcu", conn).start()
+except socket.error as inst:
+    print('socket bind failed. No network available:', inst)
+else:
+    s.listen(10)
+    print('socket now listening')
+    while 1:
+        conn, address = s.accept()
+        print('Connected with ' + address[0] + ':' + str(address[1]))
+        last_ip_digit = int(conn.getsockname()[0].split('.')[3])
+        McuInterpretNet(last_ip_digit, "mcu", conn).start()
