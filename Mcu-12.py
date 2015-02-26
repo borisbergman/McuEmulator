@@ -96,7 +96,11 @@ class McuInterpret(threading.Thread):
             print("Name update".rjust(21))
             whichName = self.ReceivedData[4]
             if 0 < whichName < 40:
-                print("name {0} => {1}".format(whichName, str(self.ReceivedData[5:18])))
+                print("name {0} => {1}".format(whichName, ''.join([chr(x) for x in (self.ReceivedData[5:18])])))
+                offset = self.preset_name_offset + (whichName-1) * 16
+                print("offset:{0}".format(offset))
+                self.insert_into_eeprom(offset, self.ReceivedData[5:18])
+
                 self.generate_command([0x12, 0x01])
             else:
                 print("incorrect name addressed")
@@ -337,7 +341,7 @@ class McuInterpret(threading.Thread):
                  for x in range(39)]
 
         names_combined = [item for sub_list in names for item in sub_list]
-        self.insert_into_eeprom(40960, names_combined)
+        self.insert_into_eeprom(self.preset_name_offset, names_combined)
 
         #the sd card message positions are downloaded from the eeprom file. This sets their positions
         self.insert_into_eeprom(41984, [x + 1 for x in range(2+8+8+8+4)])
@@ -355,6 +359,7 @@ class McuInterpret(threading.Thread):
         self.Eeprom = list()
         self.ThreadID = threadID
         self.name = name
+        self.preset_name_offset = 40960
         self.genEeprom()
 
         self.password = [ord(x) for x in [b'5', b'7', b'9', b'A', b'C', b'E']]
@@ -364,6 +369,7 @@ class McuInterpret(threading.Thread):
         self.stop = 0
         self.ReceivedCorrect = 0
         self.db_meter_returned_counter = 0
+
         self.exit = False
 
     def run(self):
