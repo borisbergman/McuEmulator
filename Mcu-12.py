@@ -55,7 +55,7 @@ class McuInterpret(threading.Thread):
         elif self.ReceivedData[3] == int('11', 16):
             # 4.1.1 Direct DSP access without additional info
             address = self.ReceivedData[5] * 256
-            address += self.ReceivedData[5]
+            address += self.ReceivedData[6]
 
             if self.ReceivedData[4] == int('01', 16):  # only dsp addr and bytes
                 print("4.1.1 direct dsp command".rjust(21))
@@ -69,9 +69,7 @@ class McuInterpret(threading.Thread):
                 print("Write: amount: " + str(amount) + "address: " + str(address))
                 #put data in E2prom
 
-                print("EPL1: " + str(len(self.Eeprom)))
                 self.Eeprom[address * 4:address * 4 + amount * 4] = self.ReceivedData[8:8 + amount * 4]
-                print("EPL2: " + str(len(self.Eeprom)))
 
                 self.generate_command([0x12, 0x01])
                 for z in [self.ReceivedData[8 + x:8 + x + 4] for x in range(amount)]:
@@ -318,6 +316,8 @@ class McuInterpret(threading.Thread):
     def send_data(self, data):
         raise "this method should be override"
 
+    def insert_into_eeprom(self, offset, data):
+        self.Eeprom[offset: offset+len(data)] = data
 
     def genEeprom(self):
         self.Eeprom = [0 for i in range(131072)]
@@ -327,25 +327,26 @@ class McuInterpret(threading.Thread):
             x = z * 6 + 0x8000
             self.Eeprom[x] = 0x0F
             self.Eeprom[x + 1] = 0xFF
-            self.Eeprom[x + 2] = 0x0
-            self.Eeprom[x + 3] = 0x0
+            self.Eeprom[x + 2] = 0x00
+            self.Eeprom[x + 3] = 0x00
             self.Eeprom[x + 4] = 0xFF
             self.Eeprom[x + 5] = 0xFF
 
         # presetNames
-        offset = 40960
-        amount = 39 * 16
+        names = [[62, 62, 62, x // 10 % 10 + 48, x % 10 + 48, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 124]
+                 for x in range(39)]
 
-        names = []
-        for q in [[62, 62, 62, x // 10 % 10 + 48, x % 10 + 48, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 124] for x in
-                  range(39)]:
-            names.extend(q)
+        names_combined = [item for sub_list in names for item in sub_list]
+        self.insert_into_eeprom(40960, names_combined)
 
-        self.Eeprom[offset: offset + amount] = names
+        #the sd card message positions are downloaded from the eeprom file. This sets their positions
+        self.insert_into_eeprom(41984, [x + 1 for x in range(2+8+8+8+4)])
 
-        sdmessagesoffset = 41984;
-        self.Eeprom[sdmessagesoffset: sdmessagesoffset + 20] = [x + 1 for x in range(20)]
-        self.Eeprom[sdmessagesoffset + 20: sdmessagesoffset + 30] = [0x01 for x in range(10)]
+        #ALARM.ALARM_MP_MIC_1_hold
+        self.insert_into_eeprom(303 * 4, [0x00, 0x00, 0x01, 0xE0])
+
+        #ALARM.ALARM_MP_MIC_1_decay
+        self.insert_into_eeprom(304 * 4, [0x00, 0x00, 0x00,	0x12])
 
         print("EEPROM data generated")
 
@@ -447,8 +448,8 @@ class McuInterpretNet(McuInterpret):
             return None
         return data
 
-mcuId = 0
-for cPort in [9, 11, 13]:
+mcuId = 1
+for cPort in [11, 13, 15]:
    McuInterpretCom(mcuId, "thread" + str(cPort), cPort).start()
    mcuId += 1
 
