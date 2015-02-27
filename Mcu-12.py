@@ -60,7 +60,7 @@ class McuInterpret(threading.Thread):
             if self.ReceivedData[4] == int('01', 16):  # only dsp addr and bytes
                 print("4.1.1 direct dsp command".rjust(21))
                 print("Write: address: " + str(address))
-                self.Eeprom[address * 4: address * 4 + 4] = [self.ReceivedData[7:11]]
+                self.Eeprom[address * 4: address * 4 + 4] = self.ReceivedData[7:11]
                 self.generate_command([0x12, 0x01])
             # 4.1.4 DSP Save Load
             elif self.ReceivedData[4] == int('06', 16):
@@ -287,9 +287,15 @@ class McuInterpret(threading.Thread):
         return True
 
     def checksum(self, arr):
-        counter = 0
-        for item in arr:
-            counter += item
+        try:
+            counter = 0
+            for item in arr:
+                counter += item
+        except Exception as e:
+            print("checksumError!")
+            print(str(arr))
+            raise
+
         return counter % 256
 
     #def getBytesChecksum(self, arr):
