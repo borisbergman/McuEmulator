@@ -453,8 +453,8 @@ class McuInterpretNet(McuInterpret):
     def read_data(self):
         try:
             data = self.conn.recv(1024)
-        except socket.error as message:
-            print("connection closed: {0} detail: {1}".format(str(message[0]), str(message[1])))
+        except socket.error:
+            print("connection closed")
             self.conn.close()
             self.exit = True
             return None
