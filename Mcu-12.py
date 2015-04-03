@@ -125,6 +125,7 @@ class McuInterpret(threading.Thread):
                 print("Fire Detection\t\t{0}".format(str(int2hex(self.ReceivedData[22:30]))))
             else:
                 print("not right length {0}".format(len(self.ReceivedData)))
+
         elif self.ReceivedData[3] == int('14', 16) and self.bytesToReceive > 5:
             # 4.8 Password sending
             sendpas = self.ReceivedData[5:-1]
