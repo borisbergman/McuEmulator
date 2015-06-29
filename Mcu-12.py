@@ -1,5 +1,5 @@
 import socket
-
+import time
 import serial
 import Interpreter
 
@@ -43,6 +43,8 @@ class McuInterpretNet(Interpreter.Interpreter):
 
     def send_data(self, data):
         conn.sendall(bytes(data))
+        conn.close()
+
 
     def read_data(self):
         try:
