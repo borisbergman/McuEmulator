@@ -1,4 +1,5 @@
 import abc
+import random
 import struct
 import threading
 import time
@@ -10,9 +11,12 @@ class Interpreter(threading.Thread):
 
         print("received: {0} {1} {2} ".format(self.ReceivedCorrect, str(self.ThreadID),
                                               str(HelperMethods.int2hex(self.ReceivedData))))
-
         time.sleep(.01)
-        if self.ReceivedData[3] == int('1B', 16):  # install mode
+
+        if (random.random() * 10) <= 5:
+                print("no feedback this time")
+        
+        elif self.ReceivedData[3] == int('1B', 16):  # install mode
             print("install mode".rjust(21))
             if self.ReceivedData[4] == int('01',16):  # install mode on
                 print("on")
@@ -357,6 +361,7 @@ class Interpreter(threading.Thread):
             self.ReceivedData.clear()
             # if time > 0:
             # print("done: " + str(time) + ", ok: " + str(receivedCorrect))
+
 
             while len(self.ReceivedData) <= 3:
                 res = self.read_data()

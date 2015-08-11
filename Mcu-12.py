@@ -43,7 +43,7 @@ class McuInterpretNet(Interpreter.Interpreter):
 
     def send_data(self, data):
         conn.sendall(bytes(data))
-        conn.close()
+        #conn.close()
 
 
     def read_data(self):
@@ -56,10 +56,10 @@ class McuInterpretNet(Interpreter.Interpreter):
             return None
         return data
 
-mcuId = 1
-for cPort in [5, 7, 9]:
-   McuInterpretCom(mcuId, "thread" + str(cPort), cPort).start()
-   mcuId += 1
+#mcuId = 1
+#for cPort in [5, 7, 9]:
+#   McuInterpretCom(mcuId, "thread" + str(cPort), cPort).start()
+#   mcuId += 1
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
