@@ -6,17 +6,25 @@ import time
 import math
 import HelperMethods
 
+
+
 class Interpreter(threading.Thread):
+    sendNextTime = False;
+
     def mcuInterpreter(self):  # interpret command and reply
 
         print("received: {0} {1} {2} ".format(self.ReceivedCorrect, str(self.ThreadID),
                                               str(HelperMethods.int2hex(self.ReceivedData))))
         time.sleep(.01)
 
-        if (random.random() * 10) <= 5:
-                print("no feedback this time")
-        
-        elif self.ReceivedData[3] == int('1B', 16):  # install mode
+#        if not self.sendNextTime:
+#            print("no feedback this time")
+#            self.sendNextTime = True
+#            return
+#        else:
+#            self.sendNextTime = False
+
+        if self.ReceivedData[3] == int('1B', 16):  # install mode
             print("install mode".rjust(21))
             if self.ReceivedData[4] == int('01',16):  # install mode on
                 print("on")
@@ -254,6 +262,7 @@ class Interpreter(threading.Thread):
         else:
             print("not known command".rjust(21))  # unknowm
 
+
     def isCorrectLength(self, length):
         if len(self.ReceivedData) <= length:
             if len(self.ReceivedData) > 0:
@@ -295,7 +304,11 @@ class Interpreter(threading.Thread):
         p += [self.checksum(p)]
 
         print("writing:{0}".format(str(HelperMethods.int2hex(p))))
+
         self.send_data(p)
+        #self.send_data(p[0:3])
+        #time.sleep(.1)
+        #self.send_data(p[3::1])
 
     @abc.abstractmethod
     def send_data(self, data):
