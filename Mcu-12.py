@@ -74,4 +74,7 @@ else:
         conn, address = s.accept()
         print('Connected with ' + address[0] + ':' + str(address[1]))
         last_ip_digit = int(conn.getsockname()[0].split('.')[3])
+        if(last_ip_digit) > 31:
+            last_ip_digit = 2
+
         McuInterpretNet(last_ip_digit, "mcu", conn).start()
