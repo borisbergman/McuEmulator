@@ -17,12 +17,12 @@ class Interpreter(threading.Thread):
                                               str(HelperMethods.int2hex(self.ReceivedData))))
         time.sleep(.01)
 
-#        if not self.sendNextTime:
-#            print("no feedback this time")
-#            self.sendNextTime = True
-#            return
-#        else:
-#            self.sendNextTime = False
+        if not self.sendNextTime:
+            print("no feedback this time")
+            self.sendNextTime = True
+            return
+        else:
+            self.sendNextTime = False
 
         if self.ReceivedData[3] == int('1B', 16):  # install mode
             print("install mode".rjust(21))
