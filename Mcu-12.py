@@ -1,5 +1,5 @@
 import socket
-import serial
+
 import Interpreter
 from multiprocessing import Process
 

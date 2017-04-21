@@ -10,10 +10,12 @@ import HelperMethods
 
 class Interpreter(threading.Thread):
 
+
     def mcuInterpreter(self):  # interpret command and reply
 
         print("received: {0} {1} {2} ".format(self.ReceivedCorrect, str(self.ThreadID),
                                               str(HelperMethods.int2hex(self.ReceivedData))))
+
 
         if self.ReceivedData[3] == int('1B', 16):  # install mode
             print("install mode".rjust(21))
