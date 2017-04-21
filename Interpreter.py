@@ -9,20 +9,11 @@ import HelperMethods
 
 
 class Interpreter(threading.Thread):
-    sendNextTime = False;
 
     def mcuInterpreter(self):  # interpret command and reply
 
         print("received: {0} {1} {2} ".format(self.ReceivedCorrect, str(self.ThreadID),
                                               str(HelperMethods.int2hex(self.ReceivedData))))
-        time.sleep(.01)
-
-        if not self.sendNextTime:
-            print("no feedback this time")
-            self.sendNextTime = True
-            return
-        else:
-            self.sendNextTime = False
 
         if self.ReceivedData[3] == int('1B', 16):  # install mode
             print("install mode".rjust(21))
@@ -71,7 +62,16 @@ class Interpreter(threading.Thread):
                 print("not a valid command")
         elif self.ReceivedData[3] == int('16', 16):
             # 4.3 Routing table update
-            print("routing table update received".rjust(21))
+            print("routing table update received")
+
+            data = self.ReceivedData[4:len(self.ReceivedData)-1]
+            #offset = (self.ReceivedData[4]-1) * 6 + 0x8000
+
+            for x in range(len(data)-1)[::5]:
+                self.insert_into_eeprom((data[x]-1)*6 + 0x8000, data[x+1:x+5])
+                print("button ", data[x], "data ", HelperMethods.int2hex(data[x+1:x+5]))
+
+
             self.generate_command([0x12, 0x01])
         elif self.ReceivedData[3] == int('15', 16):
             # 4.4 Name update
@@ -193,7 +193,7 @@ class Interpreter(threading.Thread):
                 #4.12.2 Get installation tree
                 print("get installation tree")
                 self.generate_command(
-                    [0x12, 0x0B, 0x21, 0x42, 0x42, 0x42, 0x42, 0x42, 0x34, 0x24, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+                    [0x12, 0x0B, 0x21, 0x42, 0x42, 0x42, 0x42, 0x42, 0x34, 0x24, 0x42, 0x42, 0x42, 0x42, 0x02, 0x42,
                      0x42])
 
             elif self.ReceivedData[4] == int('04', 16):
@@ -203,7 +203,7 @@ class Interpreter(threading.Thread):
 
 
             elif self.ReceivedData[4] == int('05', 16):
-                #4.12.5 Get name of tracks x from card x
+                #4.12.5 Get name of tracks x from card y
                 print("Sd Message card name")
                 sdcard = self.ReceivedData[5]
                 messageN = self.ReceivedData[6]
@@ -241,11 +241,15 @@ class Interpreter(threading.Thread):
                 self.Eeprom[offset:offset + amount] = self.ReceivedData[9:amount + 9]
 
                 self.generate_command([0x12, 0x01])
+
+            elif self.ReceivedData[4] == int('10', 16):
+                print("Music status" + str(self.ReceivedData[5]))
+                self.generate_command([0x12, 0x01])
             elif self.ReceivedData[4] == int('0A', 16):
                 print("Set sensitivity")
                 self.generate_command([0x12, 0x01])
             elif self.ReceivedData[4] == int('0F', 16):
-                print("keep alive")
+                print("keep alive " + str(self.ThreadID))
                 self.generate_command([0x12, 0x01])
             elif self.ReceivedData[4] == int('0B', 16):
                 self.generate_command([0x12, 0x10, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01, 0x01, 0x01, 0x01])
@@ -321,14 +325,14 @@ class Interpreter(threading.Thread):
         self.Eeprom = [0 for i in range(131072)]
 
         # RoutingTable start @0x8000
-        for z in range(216):
-            x = z * 6 + 0x8000
-            self.Eeprom[x] = 0x0F
-            self.Eeprom[x + 1] = 0xFF
-            self.Eeprom[x + 2] = 0x00
-            self.Eeprom[x + 3] = 0x00
-            self.Eeprom[x + 4] = 0xFF
-            self.Eeprom[x + 5] = 0xFF
+        #for z in range(216):
+        #    x = z * 6 + 0x8000
+        #    self.Eeprom[x] = 0x0F
+        #   self.Eeprom[x + 1] = 0xFF
+        #    self.Eeprom[x + 2] = 0x00
+        #    self.Eeprom[x + 3] = 0x00
+        #    self.Eeprom[x + 4] = 0xFF
+        #    self.Eeprom[x + 5] = 0xFF
 
         # presetNames
         names = [[62, 62, 62, x // 10 % 10 + 48, x % 10 + 48, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 124]
